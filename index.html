@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Sort Visualization</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, rgb(9, 9, 27) 0%, rgb(39, 8, 39) 50%, rgb(92, 84, 84) 100%);
+            font-family: 'Arial', sans-serif;
+            position: relative;
+        }
+        h1 {
+            font-family: 'Arial', sans-serif;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+        }
+        .input-container {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+        }
+        .array-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin-top: 250px;
+            margin-bottom: 2rem;
+            max-width: 60%;
+            padding: 0 20px;
+        }
+        .array-item {
+            transition: background-color 0.3s, transform 0.3s;
+            margin: 0.5rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #2563eb;
+            background-color: white;
+        }
+        .highlight {
+            background-color: #2563eb;
+            color: #fff;
+            transform: scale(1.2);
+        }
+        .sorted-highlight {
+            background-color: #28a745;
+            color: white;
+        }
+        .button {
+            border: 1px solid gray;
+            color: white;
+            padding: 2.5px 4px;
+            text-align: center;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .button:hover {
+            background-color: #2a1879;
+        }
+        input {
+            font-size: 16px;
+        }
+        .code-container {
+            background-color: white;
+            color: black;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-width: 25%;
+            overflow-x: auto;
+            white-space: pre;
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            height: fit-content;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-start justify-start min-h-screen relative">
+
+    <h1 class="text-3xl font-bold mb-8">Merge Sort Visualization</h1>
+    <div class="input-container">
+        <input type="text" id="arrayInput" placeholder="Enter numbers separated by commas (e.g. 4,3,2,1)" class="p-2 border border-gray-300 rounded mb-4 w-96" />
+        <div class="flex space-x-4">
+            <button id="mergeSortButton" class="button bg-green-500 text-white py-2 px-4 rounded">Merge Sort</button>
+        </div>
+    </div>
+
+    <div class="array-container flex justify-center mb-6" id="arrayContainer"></div>
+    <div class="iteration-info mt-4 text-lg text-white" id="iterationInfo"></div>
+
+    <div class="code-container mt-6" id="codeSnippet"></div>
+
+    <script>
+        // Merge Sort Visualization logic
+        let steps = [];
+
+        // Merge Sort Algorithm
+        function mergeSort(arr, beg, end) {
+            if (beg < end) {
+                const mid = Math.floor((beg + end) / 2);
+                mergeSort(arr, beg, mid);
+                mergeSort(arr, mid + 1, end);
+                merge(arr, beg, mid, end);
+            }
+        }
+
+        // Merge function (adapted to JavaScript)
+        function merge(arr, beg, mid, end) {
+            let leftArr = arr.slice(beg, mid + 1);
+            let rightArr = arr.slice(mid + 1, end + 1);
+            let i = 0, j = 0, k = beg;
+
+            while (i < leftArr.length && j < rightArr.length) {
+                if (leftArr[i] <= rightArr[j]) {
+                    arr[k] = leftArr[i];
+                    i++;
+                } else {
+                    arr[k] = rightArr[j];
+                    j++;
+                }
+                steps.push({ arr: [...arr], beg, end, mid });
+                k++;
+            }
+
+            while (i < leftArr.length) {
+                arr[k] = leftArr[i];
+                steps.push({ arr: [...arr], beg, end, mid });
+                i++;
+                k++;
+            }
+
+            while (j < rightArr.length) {
+                arr[k] = rightArr[j];
+                steps.push({ arr: [...arr], beg, end, mid });
+                j++;
+                k++;
+            }
+        }
+
+        function visualizeMergeSort() {
+            const arrayInput = document.getElementById('arrayInput').value;
+            const arrayContainer = document.getElementById('arrayContainer');
+            const iterationInfo = document.getElementById('iterationInfo');
+
+            const arr = arrayInput.split(',').map(Number);
+            arrayContainer.innerHTML = '';
+            steps = [];
+
+            mergeSort(arr, 0, arr.length - 1);
+
+            arr.forEach((num, index) => {
+                const item = document.createElement('div');
+                item.className = 'array-item';
+                item.innerHTML = num;
+                arrayContainer.appendChild(item);
+
+                if ((index + 1) % 10 === 0) {
+                    const lineBreak = document.createElement('div');
+                    lineBreak.style.flexBasis = '100%';
+                    arrayContainer.appendChild(lineBreak);
+                }
+            });
+
+            let currentStep = 0;
+
+            function displayStep() {
+                if (currentStep < steps.length) {
+                    const { arr: currentArr, beg, end, mid } = steps[currentStep];
+                    const elements = document.querySelectorAll('.array-item');
+
+                    elements.forEach((el, idx) => {
+                        el.classList.remove('highlight', 'sorted-highlight');
+                        el.innerHTML = currentArr[idx];
+                    });
+
+                    // Update the code snippet with the pseudocode
+                    document.getElementById('codeSnippet').innerHTML = `
+                        MERGE_SORT(arr, ${beg}, ${end})<br>
+                        if ${beg} < ${end}<br>
+                        set mid = ${mid}<br>
+                        MERGE_SORT(arr, ${beg}, ${mid})<br>
+                        MERGE_SORT(arr, ${mid + 1}, ${end})<br>
+                        MERGE(arr, ${beg}, ${mid}, ${end})<br>
+                        end of if
+                    `;
+
+                    elements[beg].classList.add('highlight');
+                    currentStep++;
+                    setTimeout(displayStep, 1500);
+                } else {
+                    iterationInfo.innerHTML += '<br>Sorting Complete';
+                    document.querySelectorAll('.array-item').forEach(el => el.classList.add('sorted-highlight'));
+                }
+            }
+
+            displayStep();
+        }
+
+        document.getElementById('mergeSortButton').addEventListener('click', visualizeMergeSort);
+    </script>
+</body>
+</html>
